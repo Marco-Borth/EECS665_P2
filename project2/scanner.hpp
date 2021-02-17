@@ -14,7 +14,7 @@ namespace crona{
 
 class Scanner : public yyFlexLexer{
 public:
-   
+
    Scanner(std::istream *in) : yyFlexLexer(in)
    {
 	lineNum = 1;
@@ -44,32 +44,30 @@ public:
    void errStrEsc(size_t l, size_t c){
 	crona::Report::fatal(l, c, "String literal with bad"
 	" escape sequence ignored");
-	
    }
 
    void errStrUnterm(size_t l, size_t c){
 	crona::Report::fatal(l, c, "Unterminated string"
 	" literal ignored");
-	
    }
 
    void errStrEscAndUnterm(size_t l, size_t c){
 	crona::Report::fatal(l, c, "Unterminated string literal"
-	"  with bad escape sequence ignored");
+	" with bad escape sequence ignored");
    }
 
    void errIntOverflow(size_t l, size_t c){
 	crona::Report::fatal(l, c, "Integer literal too large;"
-	"  using max value");
+	" using max value");
    }
 
    void warn(int lineNumIn, int colNumIn, std::string msg){
-	std::cerr << lineNumIn << ":" << colNumIn 
+	std::cerr << lineNumIn << ":" << colNumIn
 		<< " ***WARNING*** " << msg << std::endl;
    }
 
    void error(int lineNumIn, int colNumIn, std::string msg){
-	std::cerr << lineNumIn << ":" << colNumIn 
+	std::cerr << lineNumIn << ":" << colNumIn
 		<< " ***ERROR*** " << msg << std::endl;
    }
 
@@ -78,6 +76,7 @@ public:
    void outputTokens(std::ostream& outstream);
 
 private:
+   crona::Parser * parser = nullptr;
    crona::Parser::semantic_type *yylval = nullptr;
    size_t lineNum;
    size_t colNum;

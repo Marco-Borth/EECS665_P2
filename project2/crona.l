@@ -40,7 +40,7 @@ STRELT ([\\][nt"\\])|([^\\\n"])
 "havoc"	 	   { return makeBareToken(TokenKind::HAVOC); }
 
  yylval->transToken = new StrToken(lineNum, colNum, yytext);
- // yylval->transToken = yylval->lexeme
+  yylval->transToken = yylval->lexeme
 */
 
 %%

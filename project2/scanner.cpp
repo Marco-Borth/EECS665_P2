@@ -9,11 +9,14 @@ using Lexeme = crona::Parser::semantic_type;
 void Scanner::outputTokens(std::ostream& outstream){
 	Lexeme lex;
 	int tokenKind;
+
+	this->parser = new crona::Parser(*this);
+
 	while(true){
 		tokenKind = this->yylex(&lex);
 		if (tokenKind == TokenKind::END){
-			outstream << "EOF" 
-			  << " [" << this->lineNum 
+			outstream << "EOF"
+			  << " [" << this->lineNum
 			  << "," << this->colNum << "]"
 			  << std::endl;
 			return;

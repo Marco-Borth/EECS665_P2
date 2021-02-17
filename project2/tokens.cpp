@@ -23,7 +23,7 @@ static std::string tokenKindString(int tokKind){
 		case TokenKind::ELSE: return "ELSE";
 		case TokenKind::EQUALS: return "EQUALS";
 		case TokenKind::FALSE: return "FALSE";
-		case TokenKind::HAVOC: return "HAVOC";
+		//case TokenKind::HAVOC: return "HAVOC";
 		case TokenKind::ID: return "ID";
 		case TokenKind::IF: return "IF";
 		case TokenKind::INT: return "INT";
@@ -52,10 +52,10 @@ static std::string tokenKindString(int tokKind){
 		case TokenKind::VOID: return "VOID";
 		case TokenKind::WHILE: return "WHILE";
 		case TokenKind::WRITE: return "WRITE";
-		default:	
+		default:
 			return "OTHER";
 	}
-	
+
 }
 
 Token::Token(size_t lineIn, size_t columnIn, int kindIn)
@@ -64,35 +64,35 @@ Token::Token(size_t lineIn, size_t columnIn, int kindIn)
 
 std::string Token::toString(){
 	return tokenKindString(kind())
-	+ " [" + std::to_string(line()) 
+	+ " [" + std::to_string(line())
 	+ "," + std::to_string(col()) + "]";
 }
 
-size_t Token::line() const { 
-	return this->myLine; 
+size_t Token::line() const {
+	return this->myLine;
 }
 
-size_t Token::col() const { 
-	return this->myCol; 
+size_t Token::col() const {
+	return this->myCol;
 }
 
-int Token::kind() const { 
-	return this->myKind; 
+int Token::kind() const {
+	return this->myKind;
 }
 
 IDToken::IDToken(size_t lIn, size_t cIn, std::string vIn)
-  : Token(lIn, cIn, TokenKind::ID), myValue(vIn){ 
+  : Token(lIn, cIn, TokenKind::ID), myValue(vIn){
 }
 
 std::string IDToken::toString(){
 	return tokenKindString(kind()) + ":"
 	+ this->myValue
-	+ " [" + std::to_string(line()) 
+	+ " [" + std::to_string(line())
 	+ "," + std::to_string(col()) + "]";
 }
 
-const std::string IDToken::value() const { 
-	return this->myValue; 
+const std::string IDToken::value() const {
+	return this->myValue;
 }
 
 StrToken::StrToken(size_t lIn, size_t cIn, std::string sIn)
@@ -102,7 +102,7 @@ StrToken::StrToken(size_t lIn, size_t cIn, std::string sIn)
 std::string StrToken::toString(){
 	return tokenKindString(kind()) + ":"
 	+ this->myStr
-	+ " [" + std::to_string(line()) 
+	+ " [" + std::to_string(line())
 	+ "," + std::to_string(col()) + "]";
 }
 
@@ -116,7 +116,7 @@ IntLitToken::IntLitToken(size_t lIn, size_t cIn, int numIn)
 std::string IntLitToken::toString(){
 	return tokenKindString(kind()) + ":"
 	+ std::to_string(this->myNum)
-	+ " [" + std::to_string(line()) 
+	+ " [" + std::to_string(line())
 	+ "," + std::to_string(col()) + "]";
 }
 
