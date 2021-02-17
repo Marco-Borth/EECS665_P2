@@ -27,142 +27,142 @@ using TokenKind = crona::Parser::token;
 %option c++
 
 DIGIT [0-9]
-STRING [ !#-[]-~]
+WHITESPACE [\040\t]
+LETTER [a-zA-Z]
+ESCAPEE [nt'"\\]
+
+ /* */
+BADESC [\\][^nt"\\\n]?
+STRELT ([\\][nt"\\])|([^\\\n"])
+
+/*
+"write"	  	    { return makeBareToken(TokenKind::WRITE); }
+"havoc"	 	   { return makeBareToken(TokenKind::HAVOC); }
+
+ yylval->transToken = new StrToken(lineNum, colNum, yytext);
+ // yylval->transToken = yylval->lexeme
+*/
 
 %%
-%{          /** Code executed at the beginning of yylex **/
-            yylval = lval;
+%{
+	this->yylval = lval;
 %}
 
-"int"		{
-		int tokenKind = TokenKind::INT;
-		Token * token = new Token(lineNum, colNum, tokenKind);
-		this->yylval->lexeme = token;
-		colNum++;
-		return tokenKind;
-		}
+int    		       { return makeBareToken(TokenKind::INT); }
+bool 		      { return makeBareToken(TokenKind::BOOL); }
+byte 		      { return makeBareToken(TokenKind::BYTE); }
+array		      { return makeBareToken(TokenKind::ARRAY); }
+string		      { return makeBareToken(TokenKind::STRING); }
+void 		      { return makeBareToken(TokenKind::VOID); }
+if  		      { return makeBareToken(TokenKind::IF); }
+else		      { return makeBareToken(TokenKind::ELSE); }
+while		      { return makeBareToken(TokenKind::WHILE); }
+return		    { return makeBareToken(TokenKind::RETURN); }
+false  		    { return makeBareToken(TokenKind::FALSE); }
+true 		    { return makeBareToken(TokenKind::TRUE); }
+read		    { return makeBareToken(TokenKind::READ);}
+"write"	  	    { return makeBareToken(TokenKind::WRITE); }
+"["		        { return makeBareToken(TokenKind::LBRACE); }
+"]"		        { return makeBareToken(TokenKind::RBRACE); }
+"{"		        { return makeBareToken(TokenKind::LCURLY); }
+"}"		        { return makeBareToken(TokenKind::RCURLY); }
+"("		        { return makeBareToken(TokenKind::LPAREN); }
+")"		        { return makeBareToken(TokenKind::RPAREN); }
+";"		        { return makeBareToken(TokenKind::SEMICOLON); }
+":"		        { return makeBareToken(TokenKind::COLON); }
+","		        { return makeBareToken(TokenKind::COMMA); }
+"++"          { return makeBareToken(TokenKind::CROSSCROSS); }
+"+"           { return makeBareToken(TokenKind::CROSS); }
+"--"          { return makeBareToken(TokenKind::DASHDASH); }
+"-"		        { return makeBareToken(TokenKind::DASH); }
+"*"		        { return makeBareToken(TokenKind::STAR); }
+"/"		        { return makeBareToken(TokenKind::SLASH); }
+"!"	 	        { return makeBareToken(TokenKind::NOT); }
+"&&"          { return makeBareToken(TokenKind::AND); }
+"||"          { return makeBareToken(TokenKind::OR); }
+"=="          { return makeBareToken(TokenKind::EQUALS); }
+"!="          { return makeBareToken(TokenKind::NOTEQUALS); }
+"<"		        { return makeBareToken(TokenKind::LESS); }
+"<="          { return makeBareToken(TokenKind::LESSEQ); }
+">"		        { return makeBareToken(TokenKind::GREATER); }
+">="          { return makeBareToken(TokenKind::GREATEREQ); }
+"="		        { return makeBareToken(TokenKind::ASSIGN); }
 
-[a-zA-Z_][a-zA-Z0-9_]* {
-		int tokenKind = TokenKind::ID;
-		this->yylval->lexeme = new Token(lineNum, colNum, tokenKind);
-		colNum += yyleng;
-		return TokenKind::ID;
-		}
+({LETTER}|_)({LETTER}|{DIGIT}|_)* {
+		            yylval->lexeme = new IDToken(lineNum, colNum, yytext);
+		            colNum += yyleng;
+		            return TokenKind::ID; }
 
-":"		{
-		int tokenKind = TokenKind::COLON;
-		Token * token = new Token(lineNum, colNum, tokenKind);
-		this->yylval->lexeme = token;
-		colNum++;
-		return tokenKind;
-		}
+{DIGIT}+	    { double asDouble = std::stod(yytext);
+			          int intVal = atoi(yytext);
+			          bool overflow = false;
+			          if (asDouble > INT_MAX){ overflow = true; }
 
-";" {
-		int tokenKind = TokenKind::SEMICOLON;
-		this->yylval->lexeme = new Token(lineNum, colNum, tokenKind);
-		colNum++;
-		return tokenKind;
-		}
+				  string str = yytext;
+				  string suffix = "";
+				  for(int i = 0 ; i < str.length(); i++){
+					if (str[i] != '0'){
+						suffix = str.substr(i, std::string::npos);
+						break;
+					}
+				  }
+			          if (suffix.length() > 10){ overflow = true; }
 
-"+"		{
-		// Keep track of the "kind" of token we matched. In this case,
-		// it's a CROSS (aka the plus symbol). The full list of token
-		// kinds is declared around line 197 of grammar.hh. The testing
-		// functionScanner::outputTokens also indicates what each token
-		// represents (declared in scanner.cpp line 9)
-		int tokenKind = TokenKind::CROSS;
+			          if (overflow){
+				            errIntOverflow(lineNum, colNum);
+				            intVal = INT_MAX;
+			          }
+			          yylval->lexeme = new IntLitToken(lineNum, colNum, intVal);
+			          colNum += yyleng;
+			          return TokenKind::INTLITERAL; }
 
-		//Instatiate a token. There are 4 classes of tokens defined based on
-		// - a literal string (StringLitToken)
-		// - a literal integer (IntLitToken)
-		// - an identifier (IDToken)
-		// - a base Token (any other type)
-		// The token object is a handy place to keep information about the
-		// token (i.e. token metadata) such as the line and column on which
-		// the token character started (which can be used later in debug
-		// messages, etc).
-		Token * token = new Token(lineNum, colNum, tokenKind);
+\"{STRELT}*\" {
+   		          yylval->lexeme = new StrToken(lineNum, colNum, yytext);
+		            this->colNum += yyleng;
+		            return TokenKind::STRLITERAL; }
 
-		//Assign the token to a instance variable of the scanner.
-		// (When Flex processes a .l file in C++ mode, it creates
-		// a class called Scanner, which is a subclass of yyFlexScanner)
-		// By assigning a value to this field, we put the token
-		// metadata in a place where scanner's client program can find it.
-		this->yylval->lexeme = token;
+\"{STRELT}* {
+		            errStrUnterm(lineNum, colNum);
+		            colNum += yyleng; /*Upcoming \n resets lineNum */
+			    #if EXIT_ON_ERR
+			    exit(1);
+			    #endif
+		            }
 
-		//Since we consumed 1 character, increase the column number by 1
-		colNum++;
+["]([^"\n]*{BADESC}[^"\n]*)+(\\["])? {
+                // Bad, unterm string lit
+		errStrEscAndUnterm(lineNum, colNum);
+                colNum += yyleng;
+        }
 
-		//Let the scanner's client program know that a CROSS token
-		// has been matched
-		return tokenKind;
-		}
+["]([^"\n]*{BADESC}[^"\n]*)+(\\)? {
+                // Bad, unterm string lit
+		errStrEscAndUnterm(lineNum, colNum);
+                colNum += yyleng;
+        }
 
-"-" {
-		//Essentially the same thing as CROSS, but without the verbose
-		// comments so it doesn't look so scary.
-		int tokenKind = TokenKind::DASH;
-		this->yylval->lexeme = new Token(lineNum, colNum, tokenKind);
-		colNum++;
-		return tokenKind;
-		}
 
-\\q  {
-    std::string msg = "FATAL [" + to_string(lineNum) + "," + to_string(colNum) + "]: String literal with bad escape seqeunce ignored ";
-    msg += yytext;
-    error(lineNum,colNum,msg);
-    colNum += yyleng;
-    }
+["]([^"\n]*{BADESC}[^"\n]*)+["] {
+                // Bad string lit
+		errStrEsc(lineNum, colNum);
+                colNum += yyleng;
+        }
 
-\\n  {
-    std::string msg = "FATAL [" + to_string(lineNum) + "," + to_string(colNum) + "]: Unterminated string literal ignored ";
-    msg += yytext;
-    error(lineNum,colNum,msg);
-    colNum += yyleng;
-    }
+\n|(\r\n)     { lineNum++; colNum = 1; }
 
-\\eof  {
-    std::string msg = "FATAL [" + to_string(lineNum) + "," + to_string(colNum) + "]: Unterminated string literal ignored ";
-    msg += yytext;
-    error(lineNum,colNum,msg);
-    colNum += yyleng;
-    }
 
-{DIGIT}+	{
-    int intVal = atoi(yytext);
-    yylval->lexeme = new IntLitToken(lineNum, colNum, intVal);
-    return TokenKind::INTLITERAL;
-		}
+[ \t]+	      { colNum += yyleng; }
 
-"{STRING}*" {
-    string stringVal = yytext;
-    yylval->lexeme = new StrToken(lineNum, colNum, stringVal);
-    colNum += yyleng;
+([/][/])[^\n]*	  { /* Comment. No token, but update the
+                   char num in the very specific case of
+                   getting the correct EOF position */
+		   colNum += yyleng;
+		  }
 
-    return TokenKind::STRLITERAL;
-    }
-
-"{STRING}*\\{STRING}*"  {
-    std::string msg = "FATAL [" + to_string(lineNum) + "," + to_string(colNum) + "]: Unterminated string literal with bad escaped character ignored ";
-    msg += yytext;
-    error(lineNum,colNum,msg);
-    colNum += yyleng;
-    }
-
-\n		{
-		//Update the line number, reset the columnNumber
-		lineNum++;
-		colNum = 0;
-		}
-
-" " { }
-
-.   {
-		//TODO: Add the rest of the rules above this point so that legal characters
-		// are properly accounted for.
-		std::string msg = "FATAL [" + to_string(lineNum) + "," + to_string(colNum) + "]: Illegal character ";
-		msg += yytext;
-		error(lineNum,colNum,msg);
-		colNum += yyleng;
-    }
+.		          {
+				errIllegal(lineNum, colNum, yytext);
+			    #if EXIT_ON_ERR
+			    exit(1);
+			    #endif
+		            this->colNum += yyleng; }
 %%
